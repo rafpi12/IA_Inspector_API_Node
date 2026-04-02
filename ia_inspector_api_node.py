@@ -166,11 +166,13 @@ class IAInspectorGrok:
             },
             "optional": {
                 "user_instructions": ("STRING", {"multiline": True, "default": ""}),
+                "image":             ("IMAGE",),
+                "resize_image_to":   (["None", "512", "768", "1024"], {"default": "None"}),
             }
         }
 
     def generate_text(self, system_prompt, model, max_tokens, temperature, top_p, seed,
-                      user_instructions=""):
+                      user_instructions="", image=None, resize_image_to="None"):
 
         api_key = get_grok_key()
         if not api_key:
@@ -181,24 +183,40 @@ class IAInspectorGrok:
         except ImportError:
             return ("Error: openai package not installed. Run: pip install openai",)
 
+        import base64, io
+
         try:
-            client = OpenAI(
-                api_key=api_key,
-                base_url="https://api.x.ai/v1",
-            )
+            client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
         except Exception as e:
             return (f"Error initializing Grok client: {e}",)
+
+        # Build user message content
+        user_text = user_instructions.strip() if user_instructions and user_instructions.strip()                     else "Please respond based on your system instructions."
+
+        if image is not None:
+            try:
+                i = 255. * image[0].cpu().numpy()
+                img = Image.fromarray(np.uint8(i))
+                if resize_image_to != "None":
+                    target_size = int(resize_image_to)
+                    img.thumbnail((target_size, target_size), Image.LANCZOS)
+                buffer = io.BytesIO()
+                img.save(buffer, format="JPEG", quality=90)
+                b64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+            except Exception as e:
+                return (f"Error processing image: {e}",)
+
+            user_content = [
+                {"type": "text", "text": user_text},
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+            ]
+        else:
+            user_content = user_text
 
         messages = []
         if system_prompt and system_prompt.strip():
             messages.append({"role": "system", "content": system_prompt.strip()})
-        if user_instructions and user_instructions.strip():
-            messages.append({"role": "user", "content": user_instructions.strip()})
-        if not messages:
-            return ("Error: No input provided.",)
-        # If only system prompt, add a trigger user message
-        if len(messages) == 1 and messages[0]["role"] == "system":
-            messages.append({"role": "user", "content": "Please respond based on your system instructions."})
+        messages.append({"role": "user", "content": user_content})
 
         try:
             response = client.chat.completions.create(
