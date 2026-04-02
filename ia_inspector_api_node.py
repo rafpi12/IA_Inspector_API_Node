@@ -162,7 +162,7 @@ class IAInspectorGrok:
                 "max_tokens":    ("INT",   {"default": 1024, "min": 1,   "max": 8192}),
                 "temperature":   ("FLOAT", {"default": 0.9,  "min": 0.0, "max": 2.0, "step": 0.1}),
                 "top_p":         ("FLOAT", {"default": 0.9,  "min": 0.0, "max": 1.0, "step": 0.01}),
-                "seed":          ("INT",   {"default": 0,    "min": 0,   "max": 0xffffffffffffffff}),
+                "seed":          ("INT",   {"default": 0,    "min": 0,   "max": 2147483647}),
             },
             "optional": {
                 "user_instructions": ("STRING", {"multiline": True, "default": ""}),
