@@ -13,7 +13,7 @@ API keys are read directly from pod environment variables — no JSON config fil
 Clone into your ComfyUI custom_nodes folder:
 ```bash
 cd /workspace/ComfyUI/custom_nodes
-git clone https://github.com/YOUR_USERNAME/IA_Inspector_API_Node
+git clone https://github.com/rafpi12/IA_Inspector_API_Node
 ```
 
 ## Environment Variables
