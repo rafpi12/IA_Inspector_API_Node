@@ -20,9 +20,9 @@ SAFETY_THRESHOLD_MAP = {
 }
 
 GEMINI_MODELS = [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
     "gemini-3.1-flash-lite-preview",
-    "gemini-2.5-flash-lite-preview-09-2025",
-    "gemini-2.5-flash-preview-09-2025",
     "gemini-2.0-flash",
     "gemini-2.0-flash-lite",
     "gemini-2.0-flash-exp",
@@ -191,7 +191,8 @@ class IAInspectorGrok:
             return (f"Error initializing Grok client: {e}",)
 
         # Build user message content
-        user_text = user_instructions.strip() if user_instructions and user_instructions.strip()                     else "Please respond based on your system instructions."
+        user_text = user_instructions.strip() if user_instructions and user_instructions.strip() \
+                    else "Please respond based on your system instructions."
 
         if image is not None:
             try:
