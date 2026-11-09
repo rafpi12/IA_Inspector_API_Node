@@ -6,7 +6,7 @@ API keys are read directly from pod environment variables — no JSON config fil
 ## Nodes
 
 - **Gemini API (IA Inspector)** — Google Gemini, supports image input
-- **Grok API (IA Inspector)** — xAI Grok, text only
+- **Grok API (IA Inspector)** — xAI Grok, text + images (single image or video frame batch)
 
 ## Installation
 
@@ -45,9 +45,15 @@ pip install google-genai openai pillow
 
 | Model | Notes |
 |-------|-------|
-| `grok-3-fast` | Fast, recommended for most tasks |
-| `grok-3` | Standard quality |
-| `grok-4-fast` | Latest gen fast |
-| `grok-4` | Latest gen flagship |
-| `grok-3-mini-fast` | Lightest option |
-| `grok-3-mini` | Mini standard |
+| `grok-4.7` | Flagship, recommended |
+| `grok-4.3` | Cheaper ($1.25 / $2.50 per 1M tokens) |
+| `grok-4.7-latest` | Always the newest version |
+
+grok-3, grok-4-fast and grok-4-1-fast were retired on May 15, 2026 (xAI silently redirects them to grok-4.3).
+
+## Grok image inputs
+
+- `image`: one image, or a video frame batch. With a batch, `max_frames` frames are sent, evenly spaced and in time order.
+- `image2`: an extra image sent after `image` (e.g. a character reference).
+- `resize_image_to`: 768 is a good default for video frames (fewer tokens).
+- `reasoning_effort`: `default` sends nothing; `none` / `low` / `medium` / `high` set it explicitly.
