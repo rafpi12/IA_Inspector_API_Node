@@ -243,7 +243,11 @@ class IAInspectorGrok:
         messages.append({"role": "user", "content": user_content})
 
         base = dict(model=model, messages=messages)
-        sampling = dict(temperature=temperature, top_p=top_p, seed=seed)
+        sampling = dict(temperature=temperature, top_p=top_p)
+        if seed and seed > 0:  # xAI rejects seed = 0
+            sampling["seed"] = seed
+        print(f"[IA Inspector Grok] model={model} | system_prompt={len(system_prompt.strip()) if system_prompt else 0} chars"
+              f" | user_instructions={len(user_text)} chars | images={len(images_b64)}")
         if reasoning_effort != "default":
             sampling["reasoning_effort"] = reasoning_effort
 
