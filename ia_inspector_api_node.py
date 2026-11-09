@@ -263,6 +263,10 @@ class IAInspectorGrok:
             try:
                 response = client.chat.completions.create(**kwargs)
                 text = response.choices[0].message.content or ""
+                u = getattr(response, "usage", None)
+                if u is not None:
+                    print(f"[IA Inspector Grok] tokens: prompt={getattr(u, 'prompt_tokens', '?')} "
+                          f"completion={getattr(u, 'completion_tokens', '?')} total={getattr(u, 'total_tokens', '?')}")
                 if errors:
                     print(f"[IA Inspector Grok] OK with '{label}' after: " + " | ".join(errors))
                 return (text,)
@@ -283,14 +287,59 @@ class IAInspectorGrok:
 
 
 # ══════════════════════════════════════════════════════════════════
+#  GROK BALANCE NODE (xAI Management API)
+# ══════════════════════════════════════════════════════════════════
+class IAInspectorGrokBalance:
+    """Prepaid credit balance of the xAI team.
+    Needs GROK_MANAGEMENT_KEY (management key, not the inference API key) and GROK_TEAM_ID on the pod."""
+    CATEGORY = "IA_Inspector/API"
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("balance",)
+    FUNCTION = "get_balance"
+    OUTPUT_NODE = True
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {}, "optional": {"trigger": ("*",)}}
+
+    @classmethod
+    def IS_CHANGED(cls, **kwargs):
+        return float("nan")  # re-check on every run
+
+    def get_balance(self, trigger=None):
+        import urllib.request, urllib.error
+        key = os.environ.get("GROK_MANAGEMENT_KEY", "").strip()
+        team = os.environ.get("GROK_TEAM_ID", "").strip()
+        if not key or not team:
+            text = "xAI balance: set GROK_MANAGEMENT_KEY and GROK_TEAM_ID on the pod."
+        else:
+            url = f"https://management-api.x.ai/v1/billing/teams/{team}/prepaid/balance"
+            req = urllib.request.Request(url, headers={"Authorization": f"Bearer {key}"})
+            try:
+                with urllib.request.urlopen(req, timeout=20) as r:
+                    data = json.loads(r.read().decode("utf-8"))
+                cents = int(float(data.get("total", {}).get("val", 0)))
+                # xAI reports prepaid credit as a negative number of USD cents
+                text = f"xAI prepaid credit: ${abs(cents) / 100:.2f}"
+            except urllib.error.HTTPError as e:
+                text = f"xAI balance error {e.code}: {e.read().decode('utf-8', 'ignore')[:300]}"
+            except Exception as e:
+                text = f"xAI balance error: {e}"
+        print(f"[IA Inspector Grok] {text}")
+        return {"ui": {"text": [text]}, "result": (text,)}
+
+
+# ══════════════════════════════════════════════════════════════════
 #  MAPPINGS
 # ══════════════════════════════════════════════════════════════════
 NODE_CLASS_MAPPINGS = {
     "IAInspectorGemini": IAInspectorGemini,
     "IAInspectorGrok":   IAInspectorGrok,
+    "IAInspectorGrokBalance": IAInspectorGrokBalance,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "IAInspectorGemini": "Gemini API (IA Inspector)",
     "IAInspectorGrok":   "Grok API (IA Inspector)",
+    "IAInspectorGrokBalance": "Grok Balance (IA Inspector)",
 }

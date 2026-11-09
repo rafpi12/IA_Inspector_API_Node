@@ -6,6 +6,7 @@ API keys are read directly from pod environment variables — no JSON config fil
 ## Nodes
 
 - **Gemini API (IA Inspector)** — Google Gemini, supports image input
+- **Grok Balance (IA Inspector)** — shows the xAI prepaid credit (Management API)
 - **Grok API (IA Inspector)** — xAI Grok, text + images (single image or video frame batch)
 
 ## Installation
@@ -24,6 +25,8 @@ Set these in your RunPod pod template:
 |----------|-------------|
 | `GEMINI_API` | Google AI Studio API key |
 | `GROK_API` | xAI console API key |
+| `GROK_MANAGEMENT_KEY` | xAI management key (Grok Balance node only) |
+| `GROK_TEAM_ID` | xAI team ID (Grok Balance node only) |
 
 ## Dependencies
 
