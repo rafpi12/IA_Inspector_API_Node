@@ -242,16 +242,40 @@ class IAInspectorGrok:
             messages.append({"role": "system", "content": system_prompt.strip()})
         messages.append({"role": "user", "content": user_content})
 
-        kwargs = dict(model=model, messages=messages, max_tokens=max_tokens,
-                      temperature=temperature, top_p=top_p, seed=seed)
+        base = dict(model=model, messages=messages)
+        sampling = dict(temperature=temperature, top_p=top_p, seed=seed)
         if reasoning_effort != "default":
-            kwargs["reasoning_effort"] = reasoning_effort
+            sampling["reasoning_effort"] = reasoning_effort
 
-        try:
-            response = client.chat.completions.create(**kwargs)
-            return (response.choices[0].message.content or "",)
-        except Exception as e:
-            return (f"Grok API Error: {str(e)}",)
+        # xAI rejects some parameters depending on the model: try full, then progressively leaner requests.
+        attempts = [
+            ("full",                 {**base, "max_tokens": max_tokens, **sampling}),
+            ("no sampling params",   {**base, "max_tokens": max_tokens}),
+            ("max_completion_tokens", {**base, "max_completion_tokens": max_tokens}),
+            ("minimal",              dict(base)),
+        ]
+        errors = []
+        for label, kwargs in attempts:
+            try:
+                response = client.chat.completions.create(**kwargs)
+                text = response.choices[0].message.content or ""
+                if errors:
+                    print(f"[IA Inspector Grok] OK with '{label}' after: " + " | ".join(errors))
+                return (text,)
+            except Exception as e:
+                status = getattr(e, "status_code", None)
+                body = getattr(e, "body", None)
+                if body is None and getattr(e, "response", None) is not None:
+                    try:
+                        body = e.response.text
+                    except Exception:
+                        body = None
+                msg = f"[{label}] {status}: {body if body else e}"
+                print(f"[IA Inspector Grok] {msg}")
+                errors.append(msg)
+                if status not in (400, 422):
+                    break
+        return ("Grok API Error: " + " | ".join(str(m).replace("\n", " ") for m in errors),)
 
 
 # ══════════════════════════════════════════════════════════════════
