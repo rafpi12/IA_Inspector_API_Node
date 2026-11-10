@@ -355,7 +355,10 @@ def _chat_completion(tag, provider, client, model, system_prompt, user_instructi
             if u is not None:
                 pt = getattr(u, "prompt_tokens", 0) or 0
                 ct = getattr(u, "completion_tokens", 0) or 0
-                print(f"[{tag}] tokens: prompt={pt} completion={ct} total={getattr(u, 'total_tokens', '?')}")
+                tt = getattr(u, "total_tokens", 0) or 0
+                print(f"[{tag}] tokens: prompt={pt} completion={ct} total={tt or '?'}")
+                if tt > pt + ct:
+                    ct = tt - pt  # xAI leaves reasoning tokens out of completion_tokens, but bills them as output
                 usage_line = record_usage(provider, model, pt, ct)
             if errors:
                 print(f"[{tag}] OK with '{label}' after: " + " | ".join(errors))
