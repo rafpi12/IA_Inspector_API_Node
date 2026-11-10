@@ -1,0 +1,7 @@
+# local secrets and usage counters: never commit
+api_keys.json
+usage_log.json
+usage_log.json.tmp
+
+__pycache__/
+*.pyc
